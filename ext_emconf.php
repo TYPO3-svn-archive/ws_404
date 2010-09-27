@@ -3,7 +3,7 @@
 ########################################################################
 # Extension Manager/Repository config file for ext "ws_404".
 #
-# Auto generated 23-09-2010 01:43
+# Auto generated 27-09-2010 11:07
 #
 # Manual updates:
 # Only the data in the array - everything else is removed by next
@@ -29,7 +29,7 @@ $EM_CONF[$_EXTKEY] = array(
 	'clearCacheOnLoad' => 0,
 	'lockType' => '',
 	'author_company' => '',
-	'version' => '0.0.0',
+	'version' => '0.0.1',
 	'constraints' => array(
 		'depends' => array(
 		),
@@ -38,7 +38,9 @@ $EM_CONF[$_EXTKEY] = array(
 		'suggests' => array(
 		),
 	),
-	'_md5_values_when_last_written' => 'a:5:{s:9:"ChangeLog";s:4:"8a1b";s:10:"README.txt";s:4:"ee2d";s:12:"ext_icon.gif";s:4:"1bdc";s:19:"doc/wizard_form.dat";s:4:"31f8";s:20:"doc/wizard_form.html";s:4:"1e70";}',
+	'_md5_values_when_last_written' => 'a:8:{s:9:"ChangeLog";s:4:"8a1b";s:10:"README.txt";s:4:"ee2d";s:27:"class.user_pageNotFound.php";s:4:"5e88";s:21:"ext_conf_template.txt";s:4:"e860";s:12:"ext_icon.gif";s:4:"1b49";s:17:"ext_localconf.php";s:4:"1f66";s:19:"doc/wizard_form.dat";s:4:"31f8";s:20:"doc/wizard_form.html";s:4:"1e70";}',
+	'suggests' => array(
+	),
 );
 
 ?>
