@@ -2,7 +2,7 @@
 /***************************************************************
 *  Copyright notice
 *
-*  (c) 2010 Nikolay Orlenko
+*  (c) 2010 Web.Spectr <info@web-spectr.com>
 *  All rights reserved
 *
 *  This script is part of the TYPO3 project. The TYPO3 project is
@@ -32,7 +32,7 @@
  * Plugin for 404 error with multilingual and multidomain support, with support for RealUrl configs.
  * Uses $TYPO3_CONF_VARS['FE']['pageNotFound_handling'] hook
  * 
- * @author Nikolay Orlenko
+ * @author Web.Spectr <info@web-spectr.com>
  * @package TYPO3
  * @subpackage ws_404
  */
@@ -45,7 +45,8 @@ class user_pageNotFound {
    * @param ref reference to parent TSFE object, which is not fully initialized
    * @return void
    */
-  function pageNotFound($paParams, $ref) {
+  function pageNotFound($param, $ref) {
+	
     $this->extConf = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['ws_404']);
     $sNotFoundPageList = $this->extConf['pagesFor404Error'];
     $sNotFoundPageList = $sNotFoundPageList ? $sNotFoundPageList : 1;
@@ -53,8 +54,8 @@ class user_pageNotFound {
     $iNotFoundPageId = $this->iGetNotFoundPageId($sNotFoundPageList);
     $sLanguageVar = (!empty($aTSconf['languageVar'])) ? $aTSconf['languageVar'] : 'L'; 
     
-    $this->aParams = $paParams;
-    $this->sCurrentUrl = $paParams['currentUrl'];
+    $this->aParams = $param;
+    $this->sCurrentUrl = $param['currentUrl'];
     
     // suppose that language configuration located in preVars part of RealUrl cofiguration
     $this->aRealurlExtConf = $this->aGetRealurlConfiguration($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['realurl'], t3lib_div::getIndpEnv('HTTP_HOST'));
@@ -73,11 +74,11 @@ class user_pageNotFound {
     $aUrl['id'] = $iNotFoundPageId ? '?id=' . $iNotFoundPageId : '';
     $aUrl['type'] = $iType > 0 ? '&type=' . $iType : '';
     $aUrl['L'] = $iLanguageUid !== false ? '&' . $sLanguageVar . '=' . $iLanguageUid : '';  
-    
+	
     // this is a url from were to get content of error with appropriate language
     $sNotFoundContentPageUrl = $aUrl['domain'].'/'.'index.php' . $aUrl['id'] . $aUrl['L'] . $aUrl['type'];
-    
-    //Get charset
+	
+	//Get charset
     $charset = $GLOBALS['TYPO3_CONF_VARS']['BE']['forceCharset'] ? $GLOBALS['TYPO3_CONF_VARS']['BE']['forceCharset'] : $GLOBALS['TSFE']->defaultCharSet;
     
     $aHeaderArr = array(
@@ -86,12 +87,12 @@ class user_pageNotFound {
       'Content-Type: text/html; charset="' . $charset .'"',
   	);
   	$res = t3lib_div::getURL($sNotFoundContentPageUrl, 1, $aHeaderArr);
-  	
+	
   	// Header and content are separated by an empty line
-  	list($sHeader,$sContent) = split("\r\n\r\n", $res, 2);
+  	list($sHeader,$sContent) = explode("\r\n\r\n", $res, 2);
   	$sContent.= "\r\n";
   	
-	  echo $sContent;
+	echo $sContent;
   }
   
   /**
@@ -198,11 +199,12 @@ class user_pageNotFound {
     $iRootPageUid = (int) $oUserTSFE->findDomainRecord();
     foreach($aPagesList as $uid){
       $aRootLine = $oUserTSFE->sys_page->getRootLine($uid, '');
-      if($aRootLine[0]['uid'] == $iRootPageUid) {
+	  if($aRootLine[0]['uid'] == $iRootPageUid) {
         $iErrorUid = (int) $uid;
       }
     }
-    if (!$iErrorUid && $iRootPageUid ) $iErrorUid = $iRootPageUid; 
+    if (!$iErrorUid && $iRootPageUid ) $iErrorUid = $iRootPageUid;
+    if(count($aPagesList) == 1)	$iErrorUid = (int)$sPagesList;
     
     return $iErrorUid;
   }

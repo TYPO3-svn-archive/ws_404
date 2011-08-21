@@ -1,3 +1,6 @@
 2010-09-23 Nikolay Orlenko  <okolya@gmail.com>
+	* Inital 1 version
 
-	* initial code generated with kickstarter
+2011-08-05 Nikolay Orlenko  <okolya@gmail.com>
+
+	* Fix bug when site has not domain record
