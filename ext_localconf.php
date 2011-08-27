@@ -1,6 +1,5 @@
 <?php
 if (!defined("TYPO3_MODE")) die("Access denied.");
-
 $charset = $GLOBALS['TYPO3_CONF_VARS']['BE']['forceCharset'] ? $GLOBALS['TYPO3_CONF_VARS']['BE']['forceCharset'] : $GLOBALS['TSFE']->defaultCharSet;
 
 $TYPO3_CONF_VARS['FE']['pageNotFound_handling'] = 'USER_FUNCTION:typo3conf/ext/ws_404/class.user_pageNotFound.php:user_pageNotFound->pageNotFound';

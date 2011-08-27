@@ -1,6 +1,8 @@
-2010-09-23 Nikolay Orlenko  <okolya@gmail.com>
+2010-09-23 Nikolay Orlenko  <info@web-spectr.com>
 	* Inital 1 version
 
-2011-08-05 Nikolay Orlenko  <okolya@gmail.com>
-
+2011-08-05 Nikolay Orlenko  <info@web-spectr.com>
 	* Fix bug when site has not domain record
+
+2011-08-27 Nikolay Orlenko  <info@web-spectr.com>
+	* Add documentation

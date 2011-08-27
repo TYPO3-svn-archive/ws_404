@@ -32,7 +32,7 @@
  * Plugin for 404 error with multilingual and multidomain support, with support for RealUrl configs.
  * Uses $TYPO3_CONF_VARS['FE']['pageNotFound_handling'] hook
  * 
- * @author Web.Spectr <info@web-spectr.com>
+ * @author Nikolay Orlenko <info@web-spectr.com>
  * @package TYPO3
  * @subpackage ws_404
  */
