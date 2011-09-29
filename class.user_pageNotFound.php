@@ -133,13 +133,15 @@ class user_pageNotFound {
   function mGetDefaultFromRealUrlConf($GP, $sKey = 'preVars'){
     $mValueDefault = false;
     if (isset($GP)) {
-      foreach($this->aRealurlExtConf[$sKey] as $aItem){
-        if (array_search($GP, $aItem)) {
-          if (isset($aItem['valueDefault'])) {
-            $mValueDefault = $aItem['valueDefault'];
-          }
-        }
-      }
+	  if(is_array($this->aRealurlExtConf[$sKey])){	
+		  foreach($this->aRealurlExtConf[$sKey] as $aItem){
+			if (array_search($GP, $aItem)) {
+			  if (isset($aItem['valueDefault'])) {
+				$mValueDefault = $aItem['valueDefault'];
+			  }
+			}
+		  }
+	  }
     }
     return $mValueDefault;
   }  
