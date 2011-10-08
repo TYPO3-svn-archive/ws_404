@@ -31,99 +31,99 @@
 /**
  * Plugin for 404 error with multilingual and multidomain support, with support for RealUrl configs.
  * Uses $TYPO3_CONF_VARS['FE']['pageNotFound_handling'] hook
- * 
+ *
  * @author Nikolay Orlenko <info@web-spectr.com>
  * @package TYPO3
  * @subpackage ws_404
  */
 class user_pageNotFound {
-  
+
   /**
-   * Process 404 error and prints it's result from defined page according to current language and current domain 
-   * 
-   * @param array Parameter 
+   * Process 404 error and prints it's result from defined page according to current language and current domain
+   *
+   * @param array Parameter
    * @param ref reference to parent TSFE object, which is not fully initialized
    * @return void
    */
   function pageNotFound($param, $ref) {
-	
+
     $this->extConf = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['ws_404']);
     $sNotFoundPageList = $this->extConf['pagesFor404Error'];
     $sNotFoundPageList = $sNotFoundPageList ? $sNotFoundPageList : 1;
-    
+
     $iNotFoundPageId = $this->iGetNotFoundPageId($sNotFoundPageList);
-    $sLanguageVar = (!empty($aTSconf['languageVar'])) ? $aTSconf['languageVar'] : 'L'; 
-    
+    $sLanguageVar = (!empty($aTSconf['languageVar'])) ? $aTSconf['languageVar'] : 'L';
+
     $this->aParams = $param;
     $this->sCurrentUrl = $param['currentUrl'];
-    
+
     // suppose that language configuration located in preVars part of RealUrl cofiguration
     $this->aRealurlExtConf = $this->aGetRealurlConfiguration($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['realurl'], t3lib_div::getIndpEnv('HTTP_HOST'));
-    
+
     $iLanguageUid = $this->mGetValue($sLanguageVar);
-    
+
     $sAllowedTypeNum = $this->extConf['typeNum'];
     $aAllowedTypeNum = t3lib_div::trimExplode(',', $sAllowedTypeNum);
     $iType = $this->mGetValue('type');
-    if (!in_array($iType, $aAllowedTypeNum)) { 
-      $iType = 0; 
+    if (!in_array($iType, $aAllowedTypeNum)) {
+      $iType = 0;
     }
-    
+
     $aUrl = array();
-    $aUrl['domain'] = t3lib_div::getIndpEnv('TYPO3_REQUEST_HOST');    
+    $aUrl['domain'] = t3lib_div::getIndpEnv('TYPO3_REQUEST_HOST');
     $aUrl['id'] = $iNotFoundPageId ? '?id=' . $iNotFoundPageId : '';
     $aUrl['type'] = $iType > 0 ? '&type=' . $iType : '';
-    $aUrl['L'] = $iLanguageUid !== false ? '&' . $sLanguageVar . '=' . $iLanguageUid : '';  
-	
+    $aUrl['L'] = $iLanguageUid !== false ? '&' . $sLanguageVar . '=' . $iLanguageUid : '';
+
     // this is a url from were to get content of error with appropriate language
     $sNotFoundContentPageUrl = $aUrl['domain'].'/'.'index.php' . $aUrl['id'] . $aUrl['L'] . $aUrl['type'];
-	
+
 	//Get charset
     $charset = $GLOBALS['TYPO3_CONF_VARS']['BE']['forceCharset'] ? $GLOBALS['TYPO3_CONF_VARS']['BE']['forceCharset'] : $GLOBALS['TSFE']->defaultCharSet;
-    
+
     $aHeaderArr = array(
   		'User-agent: ' . t3lib_div::getIndpEnv('HTTP_USER_AGENT'),
   		'Referer: ' . t3lib_div::getIndpEnv('TYPO3_REQUEST_URL'),
       'Content-Type: text/html; charset="' . $charset .'"',
   	);
   	$res = t3lib_div::getURL($sNotFoundContentPageUrl, 1, $aHeaderArr);
-	
+
   	// Header and content are separated by an empty line
   	list($sHeader,$sContent) = explode("\r\n\r\n", $res, 2);
   	$sContent.= "\r\n";
-  	
+
 	echo $sContent;
   }
-  
+
   /**
    * Returns value of website GET/POST variable used with current request
    * @param string  GET/POST variable
-   * @return mixed  Variable value which was found in current request  
+   * @return mixed  Variable value which was found in current request
    */
   function mGetValue($psVar) {
     $mVal = false;
-    
+
     if (t3lib_div::_GET($psVar)) {
       $mVal = t3lib_div::_GET($psVar);
     }
-    
+
     if (is_array($this->aRealurlExtConf) && !empty($this->aRealurlExtConf) && $mVal === false) {
       $aPreGetVars = $this->decodeSpURL_doDecode($this->aParams['currentUrl']);
       if (is_array($aPreGetVars) && array_key_exists($psVar, $aPreGetVars)) {
         $mVal = $aPreGetVars[$psVar];
       }
     }
-    
+
     $mDefaultVal = $this->mGetDefaultFromRealUrlConf($psVar);
     if($mDefaulTypeValue !== false && $mVal === false) {
       $mVal = (int) $mDefaultVal;
     }
-    
+
     $mVal = ( isset($mVal) && !empty($mVal) ) ? $mVal : 0;
-    
+
     return $mVal;
   }
-  
+
   /**
    * Get valueDefault value from realurl config by given parameter
    * @param $GP What default value we are looking for
@@ -133,7 +133,7 @@ class user_pageNotFound {
   function mGetDefaultFromRealUrlConf($GP, $sKey = 'preVars'){
     $mValueDefault = false;
     if (isset($GP)) {
-	  if(is_array($this->aRealurlExtConf[$sKey])){	
+	  if(is_array($this->aRealurlExtConf[$sKey])){
 		  foreach($this->aRealurlExtConf[$sKey] as $aItem){
 			if (array_search($GP, $aItem)) {
 			  if (isset($aItem['valueDefault'])) {
@@ -144,15 +144,15 @@ class user_pageNotFound {
 	  }
     }
     return $mValueDefault;
-  }  
-  
- 
+  }
+
+
   /**
-   * Returns RealUrl configuration for requested comain  
-   * 
+   * Returns RealUrl configuration for requested domain
+   *
    * @param array Whole RealUrl config: $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['realurl']
    * @param string	Current requested domain name
-   * @return array	RealUrl configuration for requested domain 	
+   * @return array	RealUrl configuration for requested domain
    */
   function aGetRealurlConfiguration($paRealurlConf = array(), $psHost='_DEFAULT') {
   	if (is_array($paRealurlConf) && array_key_exists($psHost, $paRealurlConf)) {
@@ -166,15 +166,15 @@ class user_pageNotFound {
   	  return $paRealurlConf[$paRealurlConf[$sCurrentDomain]];
   	}
   }
-  
+
   /**
   * Get 404 page uid for current rootpage
   * @param string List of pages uid with error content for showing
   * @return int
-  */       
+  */
   public function iGetNotFoundPageId($sPagesList) {
     $iErrorUid = 0;
-    
+
     if (!defined('PATH_tslib')) {
       if (@is_dir(PATH_site.'typo3/sysext/cms/tslib/')) {
         define('PATH_tslib', PATH_site.'typo3/sysext/cms/tslib/');
@@ -184,19 +184,16 @@ class user_pageNotFound {
     }
     require_once (PATH_tslib . 'class.tslib_eidtools.php');
     require_once (PATH_t3lib . 'class.t3lib_page.php');
-    
+
     global $TYPO3_CONF_VARS;
-    
-    $this->oFEUserObj = tslib_eidtools::initFeUser(); // Initialize FE user object
-    tslib_eidtools::connectDB(); //Connect to database
-    
+
     /**
      * initialize TSFE
      */
     $oUserTSFE = t3lib_div::makeInstance('tslib_fe', $TYPO3_CONF_VARS, 1, 0, true);
     $oUserTSFE->sys_page = t3lib_div::makeInstance('t3lib_pageSelect');
-    
-    
+
+
     $aPagesList = t3lib_div::trimExplode(',', $sPagesList);
     $iRootPageUid = (int) $oUserTSFE->findDomainRecord();
     foreach($aPagesList as $uid){
@@ -207,12 +204,13 @@ class user_pageNotFound {
     }
     if (!$iErrorUid && $iRootPageUid ) $iErrorUid = $iRootPageUid;
     if(count($aPagesList) == 1)	$iErrorUid = (int)$sPagesList;
-    
+
+    unset($oUserTSFE);
     return $iErrorUid;
   }
-  
-  
-  /******* RealUrl section ******/  
+
+
+  /******* RealUrl section ******/
 	/**
 	 * This is taken directly from class.tx_realurl.php and truncated and modified for our case
 	 * Decodes a speaking URL path into an array of GET parameters and a page id.
@@ -225,24 +223,24 @@ class user_pageNotFound {
 	function decodeSpURL_doDecode($speakingURIpath, $cHashCache = FALSE) {
 	  $speakingURIpath = t3lib_div::trimExplode('?', $speakingURIpath);
 	  $speakingURIpath = $speakingURIpath[0];
-	  
+
 	  // Cached info:
     $cachedInfo = array();
-    
+
     // Convert URL to segments
     $pathParts = t3lib_div::trimExplode('/', $speakingURIpath, 1);
-    
+
     array_walk($pathParts, create_function('&$value', '$value = rawurldecode($value);'));
 
     // Strip/process file name or extension first
     $file_GET_VARS = $this->decodeSpURL_decodeFileName($pathParts);
-    
+
     // Setting original dir-parts:
     $this->dirParts = $pathParts;
 
     // Setting "preVars":
     $pre_GET_VARS = $this->decodeSpURL_settingPreVars($pathParts, $this->aRealurlExtConf['preVars']);
-    
+
     // Merge Get vars together:
     $cachedInfo['GET_VARS'] = array();
     if (is_array($pre_GET_VARS))
@@ -251,11 +249,11 @@ class user_pageNotFound {
       $cachedInfo['GET_VARS'] = t3lib_div::array_merge_recursive_overrule($cachedInfo['GET_VARS'], $file_GET_VARS);
 
     // Return information found:
-    return $cachedInfo['GET_VARS'];	
+    return $cachedInfo['GET_VARS'];
 	}
-	
+
   /**
-   * This is taken directly from class.tx_realurl.php 
+   * This is taken directly from class.tx_realurl.php
    * Decodes the file name and adjusts file parts accordingly
    *
    * @param array $pathParts Path parts of the URLs (can be modified)
@@ -268,13 +266,13 @@ class user_pageNotFound {
     if ($extension) {
       $getVars = array();
       if (!$this->decodeSpURL_decodeFileName_lookupInIndex($fileName, $segment, $extension, $pathParts, $getVars)) {
-        if (!$this->decodeSpURL_decodeFileName_checkHtmlSuffix($fileName, $segment, $extension, $pathParts)) {          
+        if (!$this->decodeSpURL_decodeFileName_checkHtmlSuffix($fileName, $segment, $extension, $pathParts)) {
         }
       }
     }
     return $getVars;
   }
-  
+
   /**
    * This is taken directly from class.tx_realurl.php
    * Checks if the suffix matches to the configured one.
@@ -343,7 +341,7 @@ class user_pageNotFound {
     }
     return $handled;
   }
-  
+
   /**
    * This is taken directly from class.tx_realurl.php
    * Traverses incoming array of GET-var => value pairs and implodes that to a string of GET parameters
@@ -361,7 +359,7 @@ class user_pageNotFound {
     }
     return $GET_string;
   }
-	
+
 	/**
 	 * This is taken directly from class.tx_realurl.php
 	 * Analysing the path BEFORE the page identification part of the URL
@@ -376,7 +374,7 @@ class user_pageNotFound {
 
 			// Pulling vars of the pathParts
 			$GET_string = $this->decodeSpURL_getSequence($pathParts, $config);
-      
+
 			// If a get string is created, then:
 			if ($GET_string) {
 				$GET_VARS = false;
@@ -385,7 +383,7 @@ class user_pageNotFound {
 			}
 		}
 	}
-	
+
 	/**
 	 * This is taken directly from class.tx_realurl.php and modified a little bit for our case
 	 * Pulling variables of the path parts
@@ -456,8 +454,8 @@ class user_pageNotFound {
 
     return $GET_string;
   }
-	
-	
+
+
 	/**
 	 * This is taken directly from class.tx_realurl.php
 	 * Checks for wrong boolean values (like <code>'1'</code> or </code>'true'</code> instead of <code>1</code> and <code>true</code>.
@@ -485,6 +483,6 @@ class user_pageNotFound {
 		}
 		return true;
 	}
-	
+
 }
 ?>
