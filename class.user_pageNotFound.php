@@ -46,53 +46,90 @@ class user_pageNotFound {
    * @return void
    */
   function pageNotFound($param, $ref) {
+    $sContent = '';
+	$this->extConf = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['ws_404']);
+	
+	try {
+        if($param['reasonText']){
+            t3lib_div::devLog('404 Reason: ' . $param['reasonText'], 'ws_404', 1, array('page' => t3lib_div::getIndpEnv('TYPO3_REQUEST_URL')));
+			
+			if(!$this->isSpecialStaticFile()){
+				
+				$sNotFoundPageList = $this->extConf['pagesFor404Error'];
+				$sNotFoundPageList = $sNotFoundPageList ? $sNotFoundPageList : 1;
 
-    $this->extConf = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['ws_404']);
-    $sNotFoundPageList = $this->extConf['pagesFor404Error'];
-    $sNotFoundPageList = $sNotFoundPageList ? $sNotFoundPageList : 1;
+				$iNotFoundPageId = $this->iGetNotFoundPageId($sNotFoundPageList);
+				$sLanguageVar = (!empty($aTSconf['languageVar'])) ? $aTSconf['languageVar'] : 'L';
 
-    $iNotFoundPageId = $this->iGetNotFoundPageId($sNotFoundPageList);
-    $sLanguageVar = (!empty($aTSconf['languageVar'])) ? $aTSconf['languageVar'] : 'L';
+				$this->aParams = $param;
+				$this->sCurrentUrl = $param['currentUrl'];
 
-    $this->aParams = $param;
-    $this->sCurrentUrl = $param['currentUrl'];
+				// suppose that language configuration located in preVars part of RealUrl cofiguration
+				$this->aRealurlExtConf = $this->aGetRealurlConfiguration($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['realurl'], t3lib_div::getIndpEnv('HTTP_HOST'));
 
-    // suppose that language configuration located in preVars part of RealUrl cofiguration
-    $this->aRealurlExtConf = $this->aGetRealurlConfiguration($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['realurl'], t3lib_div::getIndpEnv('HTTP_HOST'));
+				$iLanguageUid = $this->mGetValue($sLanguageVar);
 
-    $iLanguageUid = $this->mGetValue($sLanguageVar);
+				$sAllowedTypeNum = $this->extConf['typeNum'];
+				$aAllowedTypeNum = t3lib_div::trimExplode(',', $sAllowedTypeNum);
+				$iType = $this->mGetValue('type');
+				if (!in_array($iType, $aAllowedTypeNum)) {
+				  $iType = 0;
+				}
 
-    $sAllowedTypeNum = $this->extConf['typeNum'];
-    $aAllowedTypeNum = t3lib_div::trimExplode(',', $sAllowedTypeNum);
-    $iType = $this->mGetValue('type');
-    if (!in_array($iType, $aAllowedTypeNum)) {
-      $iType = 0;
+				$aUrl = array();
+				$aUrl['domain'] = t3lib_div::getIndpEnv('TYPO3_REQUEST_HOST');
+				$aUrl['id'] = $iNotFoundPageId ? '?id=' . $iNotFoundPageId : '';
+				$aUrl['type'] = $iType > 0 ? '&type=' . $iType : '';
+				$aUrl['L'] = $iLanguageUid !== false ? '&' . $sLanguageVar . '=' . $iLanguageUid : '';
+
+				// this is a url from were to get content of error with appropriate language
+				$sNotFoundContentPageUrl = $aUrl['domain'].'/'.'index.php' . $aUrl['id'] . $aUrl['L'] . $aUrl['type'];
+				/*
+				//Get charset
+				$charset = $GLOBALS['TYPO3_CONF_VARS']['BE']['forceCharset'] ? $GLOBALS['TYPO3_CONF_VARS']['BE']['forceCharset'] : $GLOBALS['TSFE']->defaultCharSet;
+				$aHeaderArr = array(
+					'User-agent: ' . t3lib_div::getIndpEnv('HTTP_USER_AGENT'),
+					'Referer: ' . t3lib_div::getIndpEnv('TYPO3_REQUEST_URL'),
+					'Content-Type: text/html; charset="' . $charset .'"',
+				);
+				$res = t3lib_div::getURL($sNotFoundContentPageUrl, 1, $aHeaderArr);
+				// Header and content are separated by an empty line
+				list($sHeader,$sContent) = explode("\r\n\r\n", $res, 2);
+				$sContent.= "\r\n";
+				*/
+
+				$sContent = @file_get_contents($sNotFoundContentPageUrl);
+			}
+			else {
+				$sContent = '404 Error';
+			}
+        }
+
+		echo $sContent;
+		throw new Exception('');
     }
-
-    $aUrl = array();
-    $aUrl['domain'] = t3lib_div::getIndpEnv('TYPO3_REQUEST_HOST');
-    $aUrl['id'] = $iNotFoundPageId ? '?id=' . $iNotFoundPageId : '';
-    $aUrl['type'] = $iType > 0 ? '&type=' . $iType : '';
-    $aUrl['L'] = $iLanguageUid !== false ? '&' . $sLanguageVar . '=' . $iLanguageUid : '';
-
-    // this is a url from were to get content of error with appropriate language
-    $sNotFoundContentPageUrl = $aUrl['domain'].'/'.'index.php' . $aUrl['id'] . $aUrl['L'] . $aUrl['type'];
-
-	//Get charset
-    $charset = $GLOBALS['TYPO3_CONF_VARS']['BE']['forceCharset'] ? $GLOBALS['TYPO3_CONF_VARS']['BE']['forceCharset'] : $GLOBALS['TSFE']->defaultCharSet;
-
-    $aHeaderArr = array(
-  		'User-agent: ' . t3lib_div::getIndpEnv('HTTP_USER_AGENT'),
-  		'Referer: ' . t3lib_div::getIndpEnv('TYPO3_REQUEST_URL'),
-      'Content-Type: text/html; charset="' . $charset .'"',
-  	);
-  	$res = t3lib_div::getURL($sNotFoundContentPageUrl, 1, $aHeaderArr);
-
-  	// Header and content are separated by an empty line
-  	list($sHeader,$sContent) = explode("\r\n\r\n", $res, 2);
-  	$sContent.= "\r\n";
-
-	echo $sContent;
+    catch (Exception $e){
+        t3lib_div::devLog('404: ' . $e->getTraceAsString(), 'ws_404', 1 );
+    }
+	exit;
+  }
+  
+  function isSpecialStaticFile(){
+	$containStatic = FALSE;
+	if(!empty($this->extConf['staticFiles'])){
+		$aStaticFiles = explode(',', $this->extConf['staticFiles']);
+		foreach($aStaticFiles as $fileExt){
+			if(stristr(t3lib_div::getIndpEnv('TYPO3_REQUEST_URL'), '.'.$fileExt) === FALSE){
+				$containStatic = FALSE;
+			}
+			else {
+				$containStatic = TRUE;
+				break;
+			}
+		}
+	}
+	return $containStatic;
+	
   }
 
   /**
@@ -185,27 +222,30 @@ class user_pageNotFound {
     require_once (PATH_tslib . 'class.tslib_eidtools.php');
     require_once (PATH_t3lib . 'class.t3lib_page.php');
 
-    global $TYPO3_CONF_VARS;
+	global $TYPO3_CONF_VARS;
 
-    /**
+	/**
      * initialize TSFE
      */
-    $oUserTSFE = t3lib_div::makeInstance('tslib_fe', $TYPO3_CONF_VARS, 1, 0, true);
+	$oUserTSFE = t3lib_div::makeInstance('tslib_fe', $TYPO3_CONF_VARS, 1, 0);
     $oUserTSFE->sys_page = t3lib_div::makeInstance('t3lib_pageSelect');
 
 
     $aPagesList = t3lib_div::trimExplode(',', $sPagesList);
     $iRootPageUid = (int) $oUserTSFE->findDomainRecord();
     foreach($aPagesList as $uid){
-      $aRootLine = $oUserTSFE->sys_page->getRootLine($uid, '');
+      $aRootLine = $oUserTSFE->sys_page->getRootLine($uid);
 	  if($aRootLine[0]['uid'] == $iRootPageUid) {
         $iErrorUid = (int) $uid;
       }
     }
+
     if (!$iErrorUid && $iRootPageUid ) $iErrorUid = $iRootPageUid;
     if(count($aPagesList) == 1)	$iErrorUid = (int)$sPagesList;
 
     unset($oUserTSFE);
+	unset($oUserTSFE->sys_page);
+
     return $iErrorUid;
   }
 

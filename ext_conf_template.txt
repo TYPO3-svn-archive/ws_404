@@ -6,3 +6,6 @@ languageVar = L
 
   # cat=basic/enable; type=string; label=typeNum parameter:Available values of typeNum parameter. Should be separated by coma.  
 typeNum =
+
+  # cat=basic/enable; type=string; label=disable for static file:Disable pagesFor404Error rendering for specific static files. For better perfomance. Should be separated by coma.  
+staticFiles = gif,jpg,jpeg,png,txt,log,css,js,ico,xml,doc,docx,pdf
