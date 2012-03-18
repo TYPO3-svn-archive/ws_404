@@ -3,7 +3,7 @@
 ########################################################################
 # Extension Manager/Repository config file for ext "ws_404".
 #
-# Auto generated 30-10-2011 18:38
+# Auto generated 18-03-2012 21:58
 #
 # Manual updates:
 # Only the data in the array - everything else is removed by next
@@ -15,7 +15,7 @@ $EM_CONF[$_EXTKEY] = array(
 	'description' => '404 content page without redirection. Works with multilanguage, multidomain, multi page types(TypeNum)',
 	'category' => 'fe',
 	'shy' => 0,
-	'version' => '0.4.0',
+	'version' => '0.5.0',
 	'dependencies' => '',
 	'conflicts' => '',
 	'priority' => '',
@@ -40,7 +40,7 @@ $EM_CONF[$_EXTKEY] = array(
 		'suggests' => array(
 		),
 	),
-	'_md5_values_when_last_written' => 'a:7:{s:9:"ChangeLog";s:4:"0ae0";s:10:"README.txt";s:4:"ee2d";s:27:"class.user_pageNotFound.php";s:4:"4f90";s:21:"ext_conf_template.txt";s:4:"5952";s:12:"ext_icon.gif";s:4:"1b49";s:17:"ext_localconf.php";s:4:"704c";s:14:"doc/manual.sxw";s:4:"5b68";}',
+	'_md5_values_when_last_written' => 'a:7:{s:9:"ChangeLog";s:4:"975e";s:10:"README.txt";s:4:"ee2d";s:27:"class.user_pageNotFound.php";s:4:"8353";s:21:"ext_conf_template.txt";s:4:"5952";s:12:"ext_icon.gif";s:4:"1b49";s:17:"ext_localconf.php";s:4:"704c";s:14:"doc/manual.sxw";s:4:"5b68";}',
 	'suggests' => array(
 	),
 );

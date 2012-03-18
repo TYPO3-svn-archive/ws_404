@@ -54,11 +54,6 @@ class user_pageNotFound {
             t3lib_div::devLog('404 Reason: ' . $param['reasonText'], 'ws_404', 1, array('page' => t3lib_div::getIndpEnv('TYPO3_REQUEST_URL')));
 			
 			if(!$this->isSpecialStaticFile()){
-				
-				$sNotFoundPageList = $this->extConf['pagesFor404Error'];
-				$sNotFoundPageList = $sNotFoundPageList ? $sNotFoundPageList : 1;
-
-				$iNotFoundPageId = $this->iGetNotFoundPageId($sNotFoundPageList);
 				$sLanguageVar = (!empty($aTSconf['languageVar'])) ? $aTSconf['languageVar'] : 'L';
 
 				$this->aParams = $param;
@@ -68,7 +63,11 @@ class user_pageNotFound {
 				$this->aRealurlExtConf = $this->aGetRealurlConfiguration($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['realurl'], t3lib_div::getIndpEnv('HTTP_HOST'));
 
 				$iLanguageUid = $this->mGetValue($sLanguageVar);
-
+				$sNotFoundPageList = $this->sCheckPages($this->extConf['pagesFor404Error'], $iLanguageUid);
+				$sNotFoundPageList = $sNotFoundPageList ? $sNotFoundPageList : 1;
+				
+				$iNotFoundPageId = $this->iGetNotFoundPageId($sNotFoundPageList);
+				
 				$sAllowedTypeNum = $this->extConf['typeNum'];
 				$aAllowedTypeNum = t3lib_div::trimExplode(',', $sAllowedTypeNum);
 				$iType = $this->mGetValue('type');
@@ -84,6 +83,8 @@ class user_pageNotFound {
 
 				// this is a url from were to get content of error with appropriate language
 				$sNotFoundContentPageUrl = $aUrl['domain'].'/'.'index.php' . $aUrl['id'] . $aUrl['L'] . $aUrl['type'];
+				
+				
 				/*
 				//Get charset
 				$charset = $GLOBALS['TYPO3_CONF_VARS']['BE']['forceCharset'] ? $GLOBALS['TYPO3_CONF_VARS']['BE']['forceCharset'] : $GLOBALS['TSFE']->defaultCharSet;
@@ -98,7 +99,16 @@ class user_pageNotFound {
 				$sContent.= "\r\n";
 				*/
 
-				$sContent = @file_get_contents($sNotFoundContentPageUrl);
+				//$sContent = @file_get_contents($sNotFoundContentPageUrl);
+				
+				if (function_exists('curl_version') == "Enabled" ) {
+					$sContent = $this->curlGet($sNotFoundContentPageUrl);
+				} else {
+					$sContent = @file_get_contents($sNotFoundContentPageUrl);
+					if(!$sContent) {
+						$sContent = 'please enable allow_url_fopen option or install cUrl!';
+					}
+				}
 			}
 			else {
 				$sContent = '404 Error';
@@ -211,7 +221,7 @@ class user_pageNotFound {
   */
   public function iGetNotFoundPageId($sPagesList) {
     $iErrorUid = 0;
-
+	
     if (!defined('PATH_tslib')) {
       if (@is_dir(PATH_site.'typo3/sysext/cms/tslib/')) {
         define('PATH_tslib', PATH_site.'typo3/sysext/cms/tslib/');
@@ -523,6 +533,43 @@ class user_pageNotFound {
 		}
 		return true;
 	}
+	
+	function sCheckPages($sPagesList, $iLanguageUid){
+		$sPagesList = trim($sPagesList);
+		
+		if($iLanguageUid === false || $iLanguageUid == 0) {
+			$res = $GLOBALS['TYPO3_DB']->exec_SELECTquery(
+				"uid as id", 
+				"pages", 
+				"deleted=0 AND hidden=0 AND uid IN (".$sPagesList.")"
+			);
+		}
+		else {
+			$res = $GLOBALS['TYPO3_DB']->exec_SELECTquery(
+				"pid as id", 
+				"pages_language_overlay", 
+				"deleted=0 AND hidden=0 AND pid IN (".$sPagesList.") AND sys_language_uid='".$iLanguageUid."'"
+			);
+		}
+		$aPagesList = array();
+		while($row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)){
+			$aPagesList[] = $row["id"]; 
+		}
+		
+		return implode(",", $aPagesList);
+	}
 
+	
+	function curlGet($url){
+		$ch = curl_init();
+		$timeout = 5; // set to zero for no timeout
+		curl_setopt ($ch, CURLOPT_URL, $url);
+		curl_setopt ($ch, CURLOPT_RETURNTRANSFER, 1);
+		curl_setopt ($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
+		$data = curl_exec($ch);
+		curl_close($ch);	
+		return $data;
+	}
+	
 }
 ?>

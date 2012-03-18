@@ -7,5 +7,8 @@
 2011-08-27 Nikolay Orlenko  <info@web-spectr.com>
 	* Add documentation
 
-2010-10-30 Nikolay Orlenko  <info@web-spectr.com>
+2011-10-30 Nikolay Orlenko  <info@web-spectr.com>
 	* Optiomisation of speed
+
+2012-03-18 Nikolay Orlenko  <info@web-spectr.com>
+	* Fix error with hidden and deleted pages. Add curl support
